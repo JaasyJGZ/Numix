@@ -1,0 +1,129 @@
+/* Agregar al archivo globals.css o crear un nuevo archivo */
+
+.dialog-form {
+  @apply bg-background/95 backdrop-blur-md;
+  @apply text-foreground;
+  @apply border border-border;
+  @apply shadow-xl;
+}
+
+.dialog-form input {
+  @apply bg-input;
+  @apply border border-border;
+  @apply text-foreground;
+  @apply placeholder-muted-foreground;
+  @apply focus:ring-2 focus:ring-primary focus:border-primary;
+}
+
+.dialog-form label {
+  @apply text-foreground;
+}
+
+.dialog-form .error {
+  @apply text-destructive;
+}
+
+
+
+.dialog-form {
+  @apply w-[95%] max-w-lg mx-auto;
+  @apply p-6;
+  @apply rounded-t-xl sm:rounded-xl;
+  @apply shadow-xl;
+  @apply transform-gpu;
+  @apply transition-all duration-200;
+
+  /* Ajustes para dispositivos móviles */
+  @media (max-width: 640px) {
+    @apply p-4;
+    @apply max-h-[90vh];
+    @apply overflow-y-auto;
+  }
+
+  /* Ajustes para el teclado virtual en móviles */
+  @supports (-webkit-touch-callout: none) {
+    @apply pb-[env(safe-area-inset-bottom)];
+  }
+
+  /* Mejoras de accesibilidad */
+  &:focus-within {
+    @apply ring-2 ring-primary ring-opacity-50;
+  }
+
+  /* Campos de formulario */
+  input,
+  select,
+  textarea {
+    @apply w-full;
+    @apply min-h-[48px];
+    @apply px-4 py-2;
+    @apply bg-input;
+    @apply border border-border;
+    @apply rounded-xl;
+    @apply text-foreground;
+    @apply placeholder-muted-foreground;
+    @apply transition-colors;
+    @apply focus:ring-2 focus:ring-primary focus:ring-opacity-50;
+
+    &:disabled {
+      @apply opacity-50 cursor-not-allowed;
+    }
+  }
+
+  /* Botones */
+  button {
+    @apply min-h-[48px];
+    @apply px-6;
+    @apply rounded-xl;
+    @apply font-medium;
+    @apply transition-all;
+    @apply focus:ring-2 focus:ring-primary focus:ring-opacity-50;
+
+    &:disabled {
+      @apply opacity-50 cursor-not-allowed;
+    }
+  }
+
+  /* Etiquetas */
+  label {
+    @apply block;
+    @apply text-sm font-medium;
+    @apply text-foreground;
+    @apply mb-1;
+  }
+
+  /* Mensajes de error */
+  .error-message {
+    @apply text-xs;
+    @apply text-destructive;
+    @apply mt-1;
+  }
+
+  /* Grupos de campos */
+  .field-group {
+    @apply space-y-4;
+  }
+
+  /* Separadores */
+  hr {
+    @apply border-border;
+    @apply my-6;
+  }
+
+  /* Animaciones */
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    animation: slideUp 0.3s ease-out;
+  }
+}
+

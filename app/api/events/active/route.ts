@@ -1,0 +1,43 @@
+import { NextResponse } from "next/server"
+import { getSupabaseAdmin } from "@/lib/supabase"
+
+// GET /api/events/active?date=YYYY-MM-DD
+// Devuelve eventos activos cuya fecha de inicio o fin coincide con la fecha dada
+// y que aún no han terminado acorde a end_date + end_time
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url)
+    const date = url.searchParams.get("date")
+    if (!date) {
+      return NextResponse.json({ error: { message: "Parámetro 'date' es requerido" } }, { status: 400 })
+    }
+
+    const supabase = getSupabaseAdmin()
+
+    // Obtiene eventos activos que coinciden con la fecha de inicio o fin
+    const { data: events, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("active", true)
+      .or(`end_date.eq.${date},start_date.eq.${date}`)
+
+    if (error) {
+      return NextResponse.json(
+        { error: { message: error.message, details: (error as any).details, hint: (error as any).hint, code: (error as any).code } },
+        { status: 500 }
+      )
+    }
+
+    // Filtra los que aún no han finalizado
+    const now = new Date()
+    const activeEvents = (events || []).filter((event: any) => {
+      const endDateTime = new Date(`${event.end_date} ${event.end_time}`)
+      return endDateTime > now
+    })
+
+    return NextResponse.json({ events: activeEvents }, { status: 200 })
+  } catch (e) {
+    const err = e as Error
+    return NextResponse.json({ error: { message: err.message, stack: err.stack } }, { status: 500 })
+  }
+}
