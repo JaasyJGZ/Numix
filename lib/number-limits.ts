@@ -529,13 +529,41 @@ export function subscribeToNumberLimits(
         },
         debouncedCallback(async (payload) => {
           try {
-            // 🚀 OBTENER DATOS ACTUALIZADOS
-            const updatedLimits = await getNumberLimits(eventId, { bypassCache: true })
-            const validLimits = Array.isArray(updatedLimits) ? updatedLimits : []
-            callback(validLimits)
-          } catch (callbackError) {
-            log(LogLevel.DEBUG, `Error al procesar cambio en límites: ${callbackError instanceof Error ? callbackError.message : "Error desconocido"}`)
-            callback([])
+            const oldTimes = (payload?.old as any)?.times_sold
+            const newTimes = (payload?.new as any)?.times_sold
+            const limitId = (payload?.new as any)?.id || (payload?.old as any)?.id
+            const numberRange = (payload?.new as any)?.number_range || (payload?.old as any)?.number_range
+            const evt = (payload as any)?.eventType || (payload as any)?.event
+
+            // Log básico para rastrear eventos relacionados a cambios en límites
+            console.debug('[number-limits] cambio recibido', {
+              event: evt,
+              limitId,
+              numberRange,
+              oldTimes,
+              newTimes,
+            })
+
+            // Solo reaccionar si times_sold o max_times cambia; evitar refetch innecesario
+            const oldMax = (payload?.old as any)?.max_times
+            const newMax = (payload?.new as any)?.max_times
+            const timesChanged = typeof oldTimes === 'number' && typeof newTimes === 'number' ? oldTimes !== newTimes : true
+            const maxChanged = typeof oldMax === 'number' && typeof newMax === 'number' ? oldMax !== newMax : false
+            if (!timesChanged && !maxChanged) {
+              return
+            }
+
+            try {
+              // 🚀 OBTENER DATOS ACTUALIZADOS
+              const updatedLimits = await getNumberLimits(eventId, { bypassCache: true })
+              const validLimits = Array.isArray(updatedLimits) ? updatedLimits : []
+              callback(validLimits)
+            } catch (callbackError) {
+              log(LogLevel.DEBUG, `Error al procesar cambio en límites: ${callbackError instanceof Error ? callbackError.message : "Error desconocido"}`)
+              callback([])
+            }
+          } catch (subErr) {
+            log(LogLevel.DEBUG, `Error en manejo de evento de límites: ${subErr instanceof Error ? subErr.message : 'Error desconocido'}`)
           }
         })
       )

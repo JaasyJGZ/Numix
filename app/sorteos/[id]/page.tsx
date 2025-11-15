@@ -268,8 +268,8 @@ export default function EventDetailsPage({ params }: { params: { id: string } | 
               tickets: processedTickets, // ✅ Solo tickets de Supabase (fuente de verdad)
               status: isClosed ? "closed" : "active",
               prize: 0,
-              // Usar el valor desde Supabase (snake_case) para evitar fallback incorrecto
-              pricePerTime: typeof currentEvent.price_per_time === 'number' ? currentEvent.price_per_time : 0.20,
+              // Usar el valor del evento (camelCase) almacenado en localStorage/Supabase
+              pricePerTime: typeof currentEvent.pricePerTime === 'number' ? currentEvent.pricePerTime : 0.20,
               awardedNumbers: currentEvent.awardedNumbers,
             }
             

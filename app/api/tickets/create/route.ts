@@ -51,6 +51,15 @@ export async function POST(req: Request) {
       const limitId = checkData?.limit_id as string | undefined
       checks.push({ number, requested, remaining: remaining ?? Infinity, available, limit_id: limitId })
 
+      // Log de verificación para diagnóstico de incrementos inesperados
+      console.debug('[tickets:create] check disponibilidad', {
+        number,
+        requested,
+        available,
+        remaining,
+        limitId,
+      })
+
       if (!available) {
         return NextResponse.json(
           {
@@ -68,6 +77,12 @@ export async function POST(req: Request) {
     const appliedIncrements: Array<{ number: string; increment: number; limitId: string }> = []
     for (const check of checks) {
       if (!check.limit_id) continue // Sin límite -> sin incremento
+
+      console.debug('[tickets:create] aplicando incremento', {
+        number: check.number,
+        increment: check.requested,
+        limitId: check.limit_id,
+      })
 
       // Obtener max_times para el límite
       const { data: limitRes, error: limitErr } = await supabaseAdmin.rpc("numix_get_limit", {
@@ -144,6 +159,8 @@ export async function POST(req: Request) {
       }
       return NextResponse.json({ error: insertErr.message }, { status: 500 })
     }
+
+    console.debug('[tickets:create] ticket creado', { ticketId: ticket.id, eventId, appliedIncrements })
 
     return NextResponse.json({ success: true, ticket: insertData }, { status: 201 })
   } catch (e) {
