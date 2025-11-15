@@ -20,7 +20,8 @@ export async function GET(req: Request) {
       .select("*")
       .eq("active", true)
       .eq("status", "active")
-      .or(`end_date.eq.${date},start_date.eq.${date}`)
+      // Incluir también los sorteos diarios, sin depender de end_date
+      .or(`end_date.eq.${date},start_date.eq.${date},repeat_daily.eq.true`)
 
     if (error) {
       return NextResponse.json(
@@ -31,6 +32,7 @@ export async function GET(req: Request) {
 
     // No filtrar por "now" en el servidor para evitar efectos por zona horaria.
     // La clasificación active/closed se realiza en el cliente con parseo local.
+    // Para repeat_daily, el cierre automático se determina por hora del día actual.
     return NextResponse.json({ events }, { status: 200 })
   } catch (e) {
     const err = e as Error

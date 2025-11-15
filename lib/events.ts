@@ -396,7 +396,7 @@ export async function autoCloseExpiredEvents(): Promise<void> {
     // Fecha local en formato YYYY-MM-DD para evitar desfases con UTC
     const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`)
     const currentDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    const currentTime = now.toTimeString().split(' ')[0].substring(0, 5) // HH:MM (local)
+    const currentTime = now.toTimeString().split(' ')[0] // HH:MM:SS (local)
     
     if (typeof window === "undefined") {
       // Server: ejecutar con admin directamente
@@ -405,7 +405,12 @@ export async function autoCloseExpiredEvents(): Promise<void> {
         .from("events")
         .select("id")
         .eq("status", "active")
-        .or(`end_date.lt.${currentDate},and(end_date.eq.${currentDate},end_time.lte.${currentTime})`)
+        // Diarios: solo por hora de hoy; No diarios: por fecha/hora
+        .or(
+          `and(repeat_daily.eq.true,end_time.lte.${currentTime}),` +
+          `and(repeat_daily.eq.false,end_date.lt.${currentDate}),` +
+          `and(repeat_daily.eq.false,end_date.eq.${currentDate},end_time.lte.${currentTime})`
+        )
 
       if (error) {
         console.error("Error fetching expired events:", error)
