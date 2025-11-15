@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button"
 import { SyncStatusIndicator } from "@/components/ui/sync-status-indicator"
 import { migrateTicketsWithoutVendor } from "@/lib/tickets"
 import { useTickets } from "@/hooks/useTickets"
+import { toLocalDateTime, getCurrentLocalDate } from "@/lib/date-utils"
 
 interface TicketRow {
   id: string
@@ -174,7 +175,8 @@ export default function EventDetailsPage({ params }: { params: { id: string } | 
   // Función auxiliar
   const isDrawClosed = useCallback((event: Event | null) => {
     if (!event) return false
-    const endDateTime = new Date(event.endDateTime)
+    const [dateStr, timeStr = "00:00:00"] = event.endDateTime.split(" ")
+    const endDateTime = toLocalDateTime(dateStr, timeStr)
     const now = new Date()
     return now > endDateTime || event.status === "closed"
   }, [])
@@ -237,7 +239,8 @@ export default function EventDetailsPage({ params }: { params: { id: string } | 
         const events = JSON.parse(storedEvents)
         const currentEvent = events.find((e: any) => e.id === resolvedEventId)
         if (currentEvent) {
-          const endDateTime = new Date(`${currentEvent.endDate} ${currentEvent.endTime}`)
+          const compareDate = currentEvent.repeatDaily ? getCurrentLocalDate() : `${currentEvent.endDate}`
+          const endDateTime = toLocalDateTime(compareDate, `${currentEvent.endTime}`)
           const now = new Date()
           const isClosed = now > endDateTime || !currentEvent.active
 
@@ -262,7 +265,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } | 
               id: currentEvent.id,
               name: currentEvent.name,
               startDateTime: `${currentEvent.startDate} ${currentEvent.startTime}`,
-              endDateTime: `${currentEvent.endDate} ${currentEvent.endTime}`,
+              endDateTime: `${compareDate} ${currentEvent.endTime}`,
               totalSold,
               sellerTimes: totalSellerTimes,
               tickets: processedTickets, // ✅ Solo tickets de Supabase (fuente de verdad)

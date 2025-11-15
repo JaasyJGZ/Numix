@@ -9,6 +9,7 @@ import { Clock, Ticket, ChevronRight, Search, Trophy, Users, DollarSign } from "
 import { Card } from "@/components/ui/card"
 import { ErrorBoundary } from "@/components/ui/error-boundary"
 import { debounce } from "@/lib/performance-utils"
+import { toLocalDateTime } from "@/lib/date-utils"
 
 // Importar los componentes y utilidades refactorizados
 import { PageHeader } from "@/components/ui/page-header"
@@ -382,8 +383,7 @@ export default function ReportesPage() {
 
         const now = new Date()
         const toDateTime = (dateStr: string, timeStr: string) => {
-          const normalizedTime = /^\d{2}:\d{2}$/.test(timeStr) ? `${timeStr}:00` : timeStr
-          return new Date(`${dateStr}T${normalizedTime}`)
+          return toLocalDateTime(dateStr, timeStr)
         }
 
         // Filtrar por fecha seleccionada y estado cerrado o expirado

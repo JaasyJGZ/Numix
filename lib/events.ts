@@ -429,16 +429,23 @@ export async function autoCloseExpiredEvents(): Promise<void> {
 
       console.log(`Se cerraron automáticamente ${ids.length} eventos expirados`)
     } else {
-      // Cliente: delegar al endpoint del servidor
-      const res = await fetch('/api/events/auto-close', { method: 'POST' })
+      // Cliente: delegar al endpoint del servidor con hora local del cliente
+      const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`)
+      const currentDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+      const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+      const res = await fetch('/api/events/auto-close', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentDate, currentTime })
+      })
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}))
         console.error('Error auto-cerrando eventos:', res.status, payload)
         return
       }
       const payload = await res.json().catch(() => ({}))
-      if (payload?.closedCount) {
-        console.log(`Se cerraron automáticamente ${payload.closedCount} eventos expirados`)
+      if (payload?.closed) {
+        console.log(`Se cerraron automáticamente ${payload.closed} eventos expirados`)
       }
     }
   } catch (error) {

@@ -1,44 +1,66 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase"
 
-export async function POST() {
+function pad(n: number) { return n < 10 ? `0${n}` : `${n}` }
+
+function getServerLocalDateTime() {
+  const now = new Date()
+  const currentDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+  const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+  return { currentDate, currentTime }
+}
+
+// POST /api/events/auto-close
+// Cierra eventos "active" cuyo end_date/end_time ya expiró.
+// Acepta opcionalmente { currentDate, currentTime } en el body para usar hora local del cliente.
+export async function POST(req: Request) {
   try {
-    const now = new Date()
-    // Usar fecha local en formato YYYY-MM-DD para evitar cierres prematuros por desfase UTC
-    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`)
-    const currentDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    const currentTime = now.toTimeString().split(' ')[0].substring(0, 5) // HH:MM (local)
+    let provided: any = {}
+    try {
+      provided = await req.json()
+    } catch {}
+    const bodyDate: string | undefined = provided?.currentDate
+    const bodyTime: string | undefined = provided?.currentTime
+    const { currentDate, currentTime } = bodyDate && bodyTime ? { currentDate: bodyDate, currentTime: bodyTime } : getServerLocalDateTime()
 
-    const admin = getSupabaseAdmin()
+    const supabase = getSupabaseAdmin()
 
-    // Buscar eventos activos expirados
-    const { data: expiredEvents, error } = await admin
+    // Seleccionar eventos activos que ya expiraron respecto a currentDate/currentTime provistos
+    // - repeat_daily: sólo comparar por hora del día actual
+    // - no repeat_daily: comparar por fecha/hora de fin
+    const orCondition = [
+      `and(repeat_daily.eq.true,end_time.lte.${currentTime})`,
+      `and(repeat_daily.eq.false,end_date.lt.${currentDate})`,
+      `and(repeat_daily.eq.false,end_date.eq.${currentDate},end_time.lte.${currentTime})`,
+    ].join(",")
+    const { data: expired, error } = await supabase
       .from("events")
-      .select("id")
+      .select("id,status,active")
+      .eq("active", true)
       .eq("status", "active")
-      .or(`end_date.lt.${currentDate},and(end_date.eq.${currentDate},end_time.lte.${currentTime})`)
+      .or(orCondition)
 
     if (error) {
       return NextResponse.json({ error: { message: error.message } }, { status: 500 })
     }
 
-    if (!expiredEvents || expiredEvents.length === 0) {
-      return NextResponse.json({ closedCount: 0, closedIds: [] }, { status: 200 })
+    const idsToClose = (expired || []).map((e: any) => e.id)
+
+    let updatedCount = 0
+    if (idsToClose.length > 0) {
+      const { error: updateErr, count } = await supabase
+        .from("events")
+        .update({ status: "closed_not_awarded" })
+        .in("id", idsToClose)
+        .select("id", { count: "exact" })
+
+      if (updateErr) {
+        return NextResponse.json({ error: { message: updateErr.message } }, { status: 500 })
+      }
+      updatedCount = count || idsToClose.length
     }
 
-    const ids = expiredEvents.map((e: any) => e.id)
-
-    // Cerrar eventos expirados
-    const { error: updateError } = await admin
-      .from("events")
-      .update({ status: "closed_not_awarded" })
-      .in("id", ids)
-
-    if (updateError) {
-      return NextResponse.json({ error: { message: updateError.message } }, { status: 500 })
-    }
-
-    return NextResponse.json({ closedCount: ids.length, closedIds: ids }, { status: 200 })
+    return NextResponse.json({ closed: updatedCount, usedDate: currentDate, usedTime: currentTime }, { status: 200 })
   } catch (e) {
     const err = e as Error
     return NextResponse.json({ error: { message: err.message, stack: err.stack } }, { status: 500 })

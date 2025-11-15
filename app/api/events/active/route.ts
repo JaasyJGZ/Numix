@@ -14,11 +14,12 @@ export async function GET(req: Request) {
 
     const supabase = getSupabaseAdmin()
 
-    // Obtiene eventos activos que coinciden con la fecha de inicio o fin
+    // Obtiene eventos que coinciden con la fecha de inicio o fin y están marcados activos/"active"
     const { data: events, error } = await supabase
       .from("events")
       .select("*")
       .eq("active", true)
+      .eq("status", "active")
       .or(`end_date.eq.${date},start_date.eq.${date}`)
 
     if (error) {
@@ -28,14 +29,9 @@ export async function GET(req: Request) {
       )
     }
 
-    // Filtra los que aún no han finalizado
-    const now = new Date()
-    const activeEvents = (events || []).filter((event: any) => {
-      const endDateTime = new Date(`${event.end_date} ${event.end_time}`)
-      return endDateTime > now
-    })
-
-    return NextResponse.json({ events: activeEvents }, { status: 200 })
+    // No filtrar por "now" en el servidor para evitar efectos por zona horaria.
+    // La clasificación active/closed se realiza en el cliente con parseo local.
+    return NextResponse.json({ events }, { status: 200 })
   } catch (e) {
     const err = e as Error
     return NextResponse.json({ error: { message: err.message, stack: err.stack } }, { status: 500 })

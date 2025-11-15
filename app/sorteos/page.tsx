@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Award, AlertCircle } from "lucide-react"
 import { Card } from "@/components/ui/card"
+import { toLocalDateTime, getCurrentLocalDate, getCurrentLocalTime } from "@/lib/date-utils"
 // Cambiar esta línea:
 // import { supabase } from "@/lib/supabase"
 
@@ -80,9 +81,17 @@ export default function SorteosPage() {
         return
       }
       
-      // Intentar cerrar automáticamente eventos expirados antes de cargar
+      // Intentar cerrar automáticamente eventos expirados usando hora local del cliente
       try {
-        await fetch("/api/events/auto-close", { method: "POST" })
+        const body = {
+          currentDate: getCurrentLocalDate(),
+          currentTime: getCurrentLocalTime(),
+        }
+        await fetch("/api/events/auto-close", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
       } catch (e) {
         console.warn("No se pudo ejecutar auto-close de eventos:", e)
       }
@@ -102,19 +111,19 @@ export default function SorteosPage() {
 
         // Utilidad robusta para parsear fecha y hora (compatible y sin ambigüedades)
         const toDateTime = (dateStr: string, timeStr: string) => {
-          const normalizedTime = /^\d{2}:\d{2}$/.test(timeStr) ? `${timeStr}:00` : timeStr
-          // Usar formato ISO con 'T' para evitar parseos inconsistentes por espacio
-          return new Date(`${dateStr}T${normalizedTime}`)
+          return toLocalDateTime(dateStr, timeStr)
         }
 
         // Filtrar eventos activos y cerrados con parseo fiable y considerando status
         const active = eventsData.filter((draw) => {
-          const endDT = toDateTime(draw.end_date, draw.end_time)
-          return endDT > currentDate && (draw.status === "active")
+          const compareDate = draw.repeat_daily ? getCurrentLocalDate() : draw.end_date
+          const endDT = toDateTime(compareDate, draw.end_time)
+          return endDT > currentDate && draw.status === "active"
         })
 
         const closed = eventsData.filter((draw) => {
-          const endDT = toDateTime(draw.end_date, draw.end_time)
+          const compareDate = draw.repeat_daily ? getCurrentLocalDate() : draw.end_date
+          const endDT = toDateTime(compareDate, draw.end_time)
           return endDT <= currentDate || !draw.active || (typeof draw.status === "string" && draw.status.startsWith("closed_"))
         })
 
@@ -158,6 +167,7 @@ export default function SorteosPage() {
               startTime: event.start_time,
               endTime: event.end_time,
               active: event.active,
+              repeatDaily: event.repeat_daily ?? false,
               pricePerTime: typeof event.price_per_time === 'number' ? event.price_per_time : 0.20,
               status: event.status || "active",
               awardedNumbers: event.first_prize
@@ -192,17 +202,18 @@ export default function SorteosPage() {
       const currentDate = new Date()
 
       const toDateTime = (dateStr: string, timeStr: string) => {
-        const normalizedTime = /^\d{2}:\d{2}$/.test(timeStr) ? `${timeStr}:00` : timeStr
-        return new Date(`${dateStr}T${normalizedTime}`)
+        return toLocalDateTime(dateStr, timeStr)
       }
 
       const active = parsedDraws.filter((draw: any) => {
-        const endDT = toDateTime(draw.endDate, draw.endTime)
+        const compareDate = draw.repeatDaily ? getCurrentLocalDate() : draw.endDate
+        const endDT = toDateTime(compareDate, draw.endTime)
         return endDT > currentDate && draw.status === "active"
       })
 
       const closed = parsedDraws.filter((draw: any) => {
-        const endDT = toDateTime(draw.endDate, draw.endTime)
+        const compareDate = draw.repeatDaily ? getCurrentLocalDate() : draw.endDate
+        const endDT = toDateTime(compareDate, draw.endTime)
         return endDT <= currentDate || !draw.active || (typeof draw.status === "string" && draw.status.startsWith("closed_"))
       })
 
