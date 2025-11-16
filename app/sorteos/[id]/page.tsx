@@ -101,6 +101,9 @@ export default function EventDetailsPage({ params }: { params: { id: string } | 
   // Referencia para el controlador de cancelación
   const abortControllerRef = useRef<AbortController | null>(null)
 
+  // Estado de envío para bloquear el botón y evitar dobles envíos
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   // Hook useTickets integrado correctamente con la solución
   const {
     clientName,
@@ -145,7 +148,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } | 
       }
     },
     setIsProcessing: (processing) => {
-      // Manejar estado de procesamiento si es necesario
+      setIsSubmitting(processing)
     },
     onSuccess: () => {
       setIsCreateTicketOpen(false)
@@ -773,19 +776,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } | 
           onAddRow={addNewRow}
           onRemoveRow={removeRow}
           onComplete={async () => {
-            if ((window as any)._isProcessingTicket) {
-              console.log('Ya hay un proceso de creación de ticket en curso, evitando duplicación')
-              return
-            }
-            
-            try {
-              (window as any)._isProcessingTicket = true
-              await handleComplete()
-            } finally {
-              setTimeout(() => {
-                (window as any)._isProcessingTicket = false
-              }, 1000)
-            }
+            await handleComplete()
           }}
           onDelete={
             selectedTicket
@@ -798,6 +789,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } | 
           isReadOnly={isDrawClosed(event)}
           title={isDrawClosed(event) ? "Detalles del ticket" : selectedTicket ? "Editar ticket" : "Nuevo ticket"}
           selectedTicket={selectedTicket}
+          submitProcessing={isSubmitting}
           errorMessage={ticketError?.message}
           errorStatus={ticketError?.status}
           numberInfo={ticketError?.numberInfo}

@@ -238,8 +238,14 @@ const addNewRow = useCallback((initialValues?: { times?: string; actions?: strin
           id: selectedTicket.id,
           vendorEmail: vendorEmailToUse
         }, eventId, currentVendorEmail)
-        
-        if (result) {
+        // ✅ Manejo explícito de éxito/error
+        if (result && 'success' in result && !result.success) {
+          // Error al actualizar
+          setError?.(result.message)
+          return
+        }
+        if (result && !('success' in result)) {
+          // Actualización exitosa: actualizar lista y cerrar
           setTickets?.((prev: any) => 
             prev.map((t: any) => t.id === selectedTicket.id ? result : t)
           )

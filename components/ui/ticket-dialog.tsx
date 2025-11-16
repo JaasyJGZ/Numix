@@ -31,6 +31,10 @@ interface TicketDialogProps {
   isReadOnly?: boolean
   selectedTicket?: any
   onDelete?: () => void
+  submitProcessing?: boolean
+  errorMessage?: string
+  errorStatus?: "warning" | "error" | "info"
+  numberInfo?: { number: string; remaining: number; requested: number }
 }
 
 interface TicketRowComponentProps {
@@ -225,7 +229,8 @@ const TicketDialog: React.FC<TicketDialogProps> = ({
   onComplete,
   isReadOnly = false,
   selectedTicket,
-  onDelete
+  onDelete,
+  submitProcessing = false
 }) => {
   // ==========================================
   // ESTADO Y REFERENCIAS
@@ -634,7 +639,6 @@ const TicketDialog: React.FC<TicketDialogProps> = ({
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Añadir otra fila
-                {isProcessing && <span className="ml-2 text-xs">(Procesando...)</span>}
               </Button>
             )}
 
@@ -676,13 +680,12 @@ const TicketDialog: React.FC<TicketDialogProps> = ({
               </Button>
               <Button
                 onClick={handleComplete}
-                disabled={!isFormValid || isProcessing}
+                disabled={!isFormValid || submitProcessing}
                 className="flex-1 h-12 bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 transition-all font-semibold"
                 aria-label="Completar ticket"
               >
                 <Check className="mr-2 h-4 w-4" />
                 {selectedTicket ? "Actualizar" : "Completar"}
-                {isProcessing && <span className="ml-2 text-xs">(Procesando...)</span>}
               </Button>
             </>
           )}
