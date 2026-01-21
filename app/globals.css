@@ -1,0 +1,646 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-montserrat: "Montserrat", sans-serif;
+
+  /* COLORES NARANJAS PRINCIPALES */
+  --primary: 25 95% 53%; /* #FF6B35 */
+  --primary-hover: 25 95% 48%; /* Más oscuro */
+  --secondary: 30 100% 60%; /* #FF8C42 */
+  --secondary-hover: 30 100% 55%;
+  --accent: 35 100% 50%; /* #FF7F00 */
+  --accent-hover: 35 100% 45%;
+
+  /* VARIABLES DEL SISTEMA - TEMA CLARO */
+  --background: 0 0% 100%; /* Blanco */
+  --foreground: 0 0% 0%; /* Negro */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 40%;
+  --border: 0 0% 20%; /* Bordes negros */
+  --input: 0 0% 95%; /* Inputs claros */
+  --ring: 25 95% 53%;
+  --destructive: 0 84% 60%; /* Rojo para errores */
+  --destructive-foreground: 0 0% 98%;
+
+  /* Radio de bordes */
+  --radius: 1rem;
+
+  /* Variables adicionales para tema claro */
+  --background-soft: 0 0% 98%;
+  --background-softer: 0 0% 96%;
+
+  /* Espaciado base */
+  --spacing-base: 1rem;
+  --spacing-xs: calc(var(--spacing-base) * 0.25);
+  --spacing-sm: calc(var(--spacing-base) * 0.5);
+  --spacing-md: var(--spacing-base);
+  --spacing-lg: calc(var(--spacing-base) * 1.5);
+  --spacing-xl: calc(var(--spacing-base) * 2);
+  --spacing-2xl: calc(var(--spacing-base) * 3);
+
+  /* Tamaños de fuente */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+}
+
+/* Estilos base */
+@layer base {
+  html {
+    @apply antialiased scroll-smooth;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  @media (max-width: 640px) {
+    html {
+      font-size: 14px;
+    }
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans min-h-screen;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Tipografía */
+  h1 {
+    @apply text-2xl font-bold md:text-3xl lg:text-4xl tracking-tight;
+    line-height: 1.2;
+  }
+
+  h2 {
+    @apply text-xl font-semibold md:text-2xl lg:text-3xl tracking-tight;
+    line-height: 1.3;
+  }
+
+  h3 {
+    @apply text-lg font-medium md:text-xl lg:text-2xl tracking-tight;
+    line-height: 1.4;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+
+  /* Scrollbar personalizada */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/50 rounded-full hover:bg-muted-foreground/70 transition-colors;
+  }
+
+  /* Focus visible para accesibilidad */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+}
+
+/* Componentes comunes */
+@layer components {
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+  }
+
+  .gradient-bg {
+    @apply bg-gradient-to-r from-primary to-secondary;
+  }
+
+  .gradient-bg-subtle {
+    @apply bg-gradient-to-r from-primary/10 to-secondary/10;
+  }
+
+  .gradient-bg-hover {
+    @apply hover:from-primary/20 hover:to-secondary/20;
+  }
+
+  .gradient-border {
+    @apply border-2 border-transparent bg-gradient-to-r from-primary to-secondary;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+  }
+
+  /* SISTEMA UNIFICADO DE ELEMENTOS INTERACTIVOS */
+  .interactive {
+    @apply transition-all duration-300 hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .interactive-shadow {
+    @apply interactive hover:shadow-lg;
+  }
+
+  /* SISTEMA UNIFICADO DE BOTONES */
+  .btn-base {
+    @apply h-12 px-4 rounded-xl font-medium transition-all duration-300 disabled:opacity-50;
+    min-height: 3rem;
+  }
+
+  .btn-primary {
+    @apply btn-base bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90;
+  }
+
+  .btn-secondary {
+    @apply btn-base bg-secondary text-secondary-foreground hover:bg-secondary/90;
+  }
+
+  .btn-responsive {
+    @apply btn-base text-base;
+  }
+
+  /* SISTEMA UNIFICADO DE INPUTS */
+  .input-unified {
+    @apply h-12 rounded-xl bg-input border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all;
+    min-height: 3rem;
+    font-size: 16px; /* Prevenir zoom en móviles */
+  }
+
+  /* SISTEMA UNIFICADO DE BOTONES TÁCTILES */
+  .touch-button {
+    @apply min-w-[48px] min-h-[48px] flex items-center justify-center;
+    touch-action: manipulation;
+  }
+
+  .icon-button {
+    @apply touch-button p-3 rounded-full hover:bg-muted transition-colors;
+  }
+
+  /* SISTEMA UNIFICADO DE CARDS */
+  .card-responsive {
+    @apply p-4 sm:p-6 rounded-xl bg-white border border-gray-200 shadow-sm interactive-shadow;
+  }
+
+  .card-effect {
+    @apply relative overflow-hidden interactive;
+  }
+
+  .card-effect::after {
+    content: "";
+    @apply absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 transition-opacity duration-300;
+  }
+
+  .card-effect:hover::after {
+    @apply opacity-100;
+  }
+
+  /* CONTENEDORES RESPONSIVOS */
+  .container-sm {
+    @apply max-w-screen-sm mx-auto px-4;
+  }
+
+  .container-md {
+    @apply max-w-screen-md mx-auto px-4;
+  }
+
+  .container-lg {
+    @apply max-w-screen-lg mx-auto px-4;
+  }
+
+  .main-container {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* SISTEMA DE GRID RESPONSIVO */
+  .grid-responsive {
+    @apply grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: var(--spacing-md);
+  }
+
+  /* TEXTOS RESPONSIVOS */
+  .text-responsive {
+    @apply text-sm sm:text-base md:text-lg;
+  }
+
+  /* DIALOG RESPONSIVO */
+  .dialog-responsive {
+    @apply p-4 sm:p-6 max-w-[95vw] sm:max-w-lg md:max-w-xl w-full mx-auto rounded-t-xl sm:rounded-xl;
+  }
+
+  /* ESTILOS PARA INPUTS DENTRO DE MODALES */
+  .modal-input {
+    @apply input-unified bg-orange-100 border-orange-300 text-gray-900 placeholder-gray-600;
+    @apply focus:ring-orange-500 focus:ring-opacity-50 focus:border-orange-500;
+  }
+
+  /* CLASES PARA BOTONES CON EFECTO DE RIPPLE */
+  .btn-ripple {
+    @apply relative overflow-hidden;
+  }
+
+  .ripple {
+    @apply absolute rounded-full bg-white/20 transform scale-0 transition-transform duration-700 ease-out;
+    transform-origin: center;
+  }
+
+  .ripple.active {
+    @apply scale-[15] opacity-0;
+  }
+
+  /* TRANSICIONES DE PÁGINA UNIFICADAS */
+  .page-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .page-transition-enter {
+    @apply opacity-0 transform translate-y-2;
+  }
+
+  .page-transition-active {
+    @apply opacity-100 transform translate-y-0;
+  }
+
+  /* CLASES PARA EFECTOS DE PARALLAX */
+  .parallax-container {
+    @apply overflow-hidden relative;
+  }
+
+  .parallax-bg {
+    @apply absolute inset-0 w-full h-[120%] -top-[10%] transition-transform duration-500 ease-out;
+    transform: translateY(0);
+  }
+
+  /* CLASES PARA LAZY LOADING DE IMÁGENES */
+  .lazy-image {
+    @apply opacity-0 transition-opacity duration-500;
+  }
+
+  .lazy-image.loaded {
+    @apply opacity-100;
+  }
+
+  /* MEJORAS DE RENDIMIENTO */
+  .gpu {
+    @apply transform-gpu;
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* MEJORAS DE ACCESIBILIDAD PARA TECLADO */
+  .focus-ring {
+    @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none;
+  }
+}
+
+/* Utilidades */
+@layer utilities {
+  .text-balance {
+    word-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Estilos para el scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thumb-gray-700 {
+    scrollbar-color: #374151 transparent;
+  }
+
+  .scrollbar-track-transparent {
+    scrollbar-track-color: transparent;
+  }
+
+  /* Soporte para WebKit (Chrome, Safari, etc.) */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #374151;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: #4b5563;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUpMobile {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDownMobile {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes animate-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Clases de animación */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s infinite ease-in-out;
+}
+
+.animate-in {
+  animation: animate-in 0.3s ease-out;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 6s linear infinite;
+}
+
+/* ===== ESTILOS PARA INPUTS DE FECHA Y CALENDARIO ===== */
+/* Estilos base para inputs de fecha y tiempo */
+input[type="date"],
+input[type="time"] {
+  @apply appearance-none bg-input border-border text-foreground;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+input[type="date"]:focus,
+input[type="time"]:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
+}
+
+input[type="date"]:hover,
+input[type="time"]:hover {
+  border-color: hsl(var(--primary) / 0.5);
+}
+
+/* Personalización del calendario nativo */
+input[type="date"]::-webkit-datetime-edit {
+  color: hsl(var(--foreground));
+  background: transparent;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: hsl(var(--foreground));
+  background: transparent;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  color: hsl(var(--muted-foreground));
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: hsl(var(--foreground));
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field:focus,
+input[type="date"]::-webkit-datetime-edit-day-field:focus,
+input[type="date"]::-webkit-datetime-edit-year-field:focus {
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  border-radius: 4px;
+}
+
+/* Personalización del icono del calendario */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3e%3c/rect%3e%3cline x1='16' y1='2' x2='16' y2='6'%3e%3c/line%3e%3cline x1='8' y1='2' x2='8' y2='6'%3e%3c/line%3e%3cline x1='3' y1='10' x2='21' y2='10'%3e%3c/line%3e%3c/svg%3e");
+  background-size: 18px 18px;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 20px;
+  height: 20px;
+  opacity: 0.8;
+  cursor: pointer;
+  filter: none;
+  transition: all 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background-color: hsl(var(--primary) / 0.1);
+  border-radius: 4px;
+}
+
+/* Forzar el color scheme para el calendario */
+input[type="date"] {
+  color-scheme: light;
+}
+
+/* Estilos adicionales para navegadores específicos */
+input[type="date"]::-moz-focus-inner {
+  border: 0;
+}
+
+input[type="date"]::-ms-clear {
+  display: none;
+}
+
+input[type="date"]::-ms-reveal {
+  display: none;
+}
+
+/* ===== ESTILOS RESPONSIVOS Y MÓVILES ===== */
+/* Prevenir zoom automático en dispositivos móviles */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+/* Para dispositivos móviles específicamente */
+@media screen and (max-width: 768px) {
+  input {
+    font-size: 16px !important;
+  }
+
+  .dialog-responsive {
+    @apply p-4;
+    width: calc(100% - 2rem) !important;
+    margin: 1rem !important;
+  }
+
+  /* Aplicar animaciones específicas para móvil */
+  [data-state="open"].dialog-content {
+    animation: slideUpMobile 0.3s ease-out;
+  }
+
+  [data-state="closed"].dialog-content {
+    animation: slideDownMobile 0.3s ease-out;
+  }
+}
+
+/* Soporte para notch y áreas seguras */
+@supports (padding: max(0px)) {
+  .safe-paddings {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}
+
+/* Prevenir scroll del body cuando el modal está abierto */
+body[data-overlay-open="true"] {
+  @apply overflow-hidden fixed inset-0;
+}
+
+/* Ajustes específicos para iOS */
+@supports (-webkit-touch-callout: none) {
+  .dialog-content {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Mejorar el scroll en modales móviles */
+.modal-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Mejoras para dispositivos táctiles */
+@media (hover: none) {
+  .touch-action-none {
+    touch-action: none;
+  }
+}
