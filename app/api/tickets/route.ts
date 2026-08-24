@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase"
+import { isEventClosedServerSide } from "@/lib/events"
 
 export async function GET(req: Request) {
   try {
@@ -37,6 +38,19 @@ export async function PUT(req: Request) {
     const { ticketId, eventId, vendorEmail, ticket } = body || {}
     if (!ticketId || !eventId || !vendorEmail) {
       return NextResponse.json({ error: { message: "ticketId, eventId y vendorEmail son requeridos" } }, { status: 400 })
+    }
+
+    // === VALIDACIÓN DE CIERRE DE EVENTO ===
+    const closureCheck = await isEventClosedServerSide(eventId)
+    if (closureCheck.closed) {
+      return NextResponse.json(
+        { 
+          error: { 
+            message: closureCheck.message || "El sorteo ya cerró y no permite modificaciones" 
+          } 
+        }, 
+        { status: 403 }
+      )
     }
 
     // Construir el objeto JSONB esperado por el RPC
@@ -321,6 +335,19 @@ export async function DELETE(req: Request) {
 
     if (!ticketId || !eventId || !vendorEmail) {
       return NextResponse.json({ error: { message: "ticketId, eventId y vendorEmail son requeridos" } }, { status: 400 })
+    }
+
+    // === VALIDACIÓN DE CIERRE DE EVENTO ===
+    const closureCheck = await isEventClosedServerSide(eventId)
+    if (closureCheck.closed) {
+      return NextResponse.json(
+        { 
+          error: { 
+            message: closureCheck.message || "El sorteo ya cerró y no permite eliminar tickets" 
+          } 
+        }, 
+        { status: 403 }
+      )
     }
 
     // 1) Obtener el ticket para validar y leer sus filas

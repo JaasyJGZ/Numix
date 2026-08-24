@@ -478,13 +478,53 @@ export async function autoCloseExpiredEvents(): Promise<void> {
         console.error('Error auto-cerrando eventos:', res.status, payload)
         return
       }
-      const payload = await res.json().catch(() => ({}))
+      const payload = await res.json()
       if (payload?.closed) {
         console.log(`Se cerraron automáticamente ${payload.closed} eventos expirados`)
       }
     }
   } catch (error) {
     console.error("Error in autoCloseExpiredEvents:", error)
+  }
+}
+
+// Función para verificar en el servidor si un evento ya cerró (por tiempo o status)
+export async function isEventClosedServerSide(eventId: string): Promise<{ closed: boolean; message?: string }> {
+  try {
+    const admin = getSupabaseAdmin()
+    const { data: event, error } = await admin
+      .from("events")
+      .select("id, status, end_date, end_time, active")
+      .eq("id", eventId)
+      .single()
+
+    if (error || !event) {
+      console.error("Error al obtener evento para validación:", error)
+      return { closed: true, message: "No se pudo verificar el estado del sorteo" }
+    }
+
+    // 1. Verificar si el evento está desactivado o ya tiene un status de cerrado
+    if (!event.active || (typeof event.status === "string" && (event.status === "closed" || event.status.startsWith("closed_")))) {
+      return { closed: true, message: "El sorteo ya no se encuentra activo" }
+    }
+
+    // 2. Verificar si el tiempo de cierre ya pasó (comparando con la hora del servidor)
+    const now = new Date()
+    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`)
+    const currentDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+    const currentTime = now.toTimeString().split(' ')[0] // HH:MM:SS (local del servidor)
+
+    const isPastDate = event.end_date < currentDate
+    const isSameDatePastTime = event.end_date === currentDate && event.end_time <= currentTime
+
+    if (isPastDate || isSameDatePastTime) {
+      return { closed: true, message: "El tiempo de cierre para este sorteo ha expirado" }
+    }
+
+    return { closed: false }
+  } catch (error) {
+    console.error("Error en isEventClosedServerSide:", error)
+    return { closed: true, message: "Error interno al verificar el cierre del sorteo" }
   }
 }
 

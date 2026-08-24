@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,16 +18,31 @@ export default function SuperUserLoginPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setIsLoading(true)
 
     const storedName = localStorage.getItem("superUserName") || "prueba"
     const storedPassword = localStorage.getItem("superUserPassword") || "12345"
 
     if (username === storedName && password === storedPassword) {
-      router.push("/super-usuario/dashboard")
+      localStorage.setItem(
+        "numix_superuser_session",
+        JSON.stringify({
+          username,
+          loggedInAt: new Date().toISOString(),
+        }),
+      )
+      router.replace("/super-usuario/dashboard")
     } else {
       setError("Credenciales inválidas")
+      setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("numix_superuser_session")) {
+      router.replace("/super-usuario/dashboard")
+    }
+  }, [router])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-primary/5 to-secondary/10 text-foreground flex flex-col items-center justify-center px-4">
@@ -103,4 +118,3 @@ export default function SuperUserLoginPage() {
     </div>
   )
 }
-

@@ -34,7 +34,6 @@ import {
 import { Card } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
-import { handleSecureLogout } from "@/lib/utils"
 // Importar funciones de Supabase
 import { getVendors, createVendor, updateVendor, deleteVendor } from "@/lib/vendors"
 import { getEvents, createEvent, updateEvent, deleteEvent, awardEvent, subscribeToEvents } from "@/lib/events"
@@ -61,16 +60,30 @@ export default function SuperUserDashboard() {
   const [showNewVendorPassword, setShowNewVendorPassword] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
 
+  const handleSuperUserLogout = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("numix_superuser_session")
+      sessionStorage.setItem("fromLogout", "true")
+    }
+    router.replace("/super-usuario")
+  }
+
   // Cargar configuración del superusuario
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const superUserSession = localStorage.getItem("numix_superuser_session")
+      if (!superUserSession) {
+        router.replace("/super-usuario")
+        return
+      }
+
       const storedName = localStorage.getItem("superUserName")
       const storedPassword = localStorage.getItem("superUserPassword")
 
       if (storedName) setSuperUserName(storedName)
       if (storedPassword) setSuperUserPassword(storedPassword)
     }
-  }, [])
+  }, [router])
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -493,7 +506,7 @@ setVendors(vendors.map((v) => (v.id === id ? { ...v, showPassword: !v.showPasswo
               </Button>
             </div>
 
-            <Button onClick={() => handleSecureLogout(router)} variant="destructive">
+            <Button onClick={handleSuperUserLogout} variant="destructive">
               <LogOut className="h-4 w-4 md:mr-2" />
               <span className="hidden md:inline">Cerrar Sesión</span>
             </Button>
@@ -878,4 +891,3 @@ setVendors(vendors.map((v) => (v.id === id ? { ...v, showPassword: !v.showPasswo
     </div>
   )
 }
-

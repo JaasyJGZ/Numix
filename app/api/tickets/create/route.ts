@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
+import { isEventClosedServerSide } from "@/lib/events"
 
 type TicketRow = {
   actions: string // número
@@ -22,6 +23,19 @@ export async function POST(req: Request) {
 
     if (!eventId || !ticket || !ticket.vendorEmail) {
       return NextResponse.json({ error: "Parámetros inválidos" }, { status: 400 })
+    }
+
+    // === VALIDACIÓN DE CIERRE DE EVENTO ===
+    const closureCheck = await isEventClosedServerSide(eventId)
+    if (closureCheck.closed) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          status: "error", 
+          message: closureCheck.message || "El sorteo ya cerró y no permite más tickets" 
+        }, 
+        { status: 403 }
+      )
     }
 
     // Consolidar cantidades por número
