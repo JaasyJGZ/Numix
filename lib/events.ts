@@ -1,5 +1,6 @@
 import { supabase, getSupabaseAdmin } from "./supabase"
 import type { Event } from "@/types"
+import { getCurrentPanamaDateTime, hasPanamaDateTimePassed } from "@/lib/date-utils"
 
 // Convertir de formato Supabase a formato de la aplicación
 const mapEventFromSupabase = (event: any): Event => ({
@@ -423,11 +424,7 @@ export async function awardEvent(
 // Función para cerrar automáticamente eventos expirados
 export async function autoCloseExpiredEvents(): Promise<void> {
   try {
-    const now = new Date()
-    // Fecha local en formato YYYY-MM-DD para evitar desfases con UTC
-    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`)
-    const currentDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    const currentTime = now.toTimeString().split(' ')[0] // HH:MM:SS (local)
+    const { currentDate, currentTime } = getCurrentPanamaDateTime()
     
     if (typeof window === "undefined") {
       // Server: ejecutar con admin directamente
@@ -464,14 +461,10 @@ export async function autoCloseExpiredEvents(): Promise<void> {
 
       console.log(`Se cerraron automáticamente ${ids.length} eventos expirados`)
     } else {
-      // Cliente: delegar al endpoint del servidor con hora local del cliente
-      const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`)
-      const currentDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-      const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
       const res = await fetch('/api/events/auto-close', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentDate, currentTime })
+        body: JSON.stringify({})
       })
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}))
@@ -508,16 +501,8 @@ export async function isEventClosedServerSide(eventId: string): Promise<{ closed
       return { closed: true, message: "El sorteo ya no se encuentra activo" }
     }
 
-    // 2. Verificar si el tiempo de cierre ya pasó (comparando con la hora del servidor)
-    const now = new Date()
-    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`)
-    const currentDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    const currentTime = now.toTimeString().split(' ')[0] // HH:MM:SS (local del servidor)
-
-    const isPastDate = event.end_date < currentDate
-    const isSameDatePastTime = event.end_date === currentDate && event.end_time <= currentTime
-
-    if (isPastDate || isSameDatePastTime) {
+    // 2. Verificar si el tiempo de cierre ya pasó usando hora exacta de Panamá.
+    if (hasPanamaDateTimePassed(event.end_date, event.end_time)) {
       return { closed: true, message: "El tiempo de cierre para este sorteo ha expirado" }
     }
 

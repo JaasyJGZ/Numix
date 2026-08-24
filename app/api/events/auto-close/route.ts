@@ -1,27 +1,15 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase"
-
-function pad(n: number) { return n < 10 ? `0${n}` : `${n}` }
-
-function getServerLocalDateTime() {
-  const now = new Date()
-  const currentDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-  const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
-  return { currentDate, currentTime }
-}
+import { getCurrentPanamaDateTime } from "@/lib/date-utils"
 
 // POST /api/events/auto-close
-// Cierra eventos "active" cuyo end_date/end_time ya expiró.
-// Acepta opcionalmente { currentDate, currentTime } en el body para usar hora local del cliente.
+// Cierra eventos "active" cuyo end_date/end_time ya expiró usando hora exacta de Panamá.
 export async function POST(req: Request) {
   try {
-    let provided: any = {}
     try {
-      provided = await req.json()
+      await req.json()
     } catch {}
-    const bodyDate: string | undefined = provided?.currentDate
-    const bodyTime: string | undefined = provided?.currentTime
-    const { currentDate, currentTime } = bodyDate && bodyTime ? { currentDate: bodyDate, currentTime: bodyTime } : getServerLocalDateTime()
+    const { currentDate, currentTime } = getCurrentPanamaDateTime()
 
     const supabase = getSupabaseAdmin()
 

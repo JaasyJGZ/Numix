@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Award, AlertCircle } from "lucide-react"
 import { Card } from "@/components/ui/card"
-import { toLocalDateTime, getCurrentLocalDate, getCurrentLocalTime } from "@/lib/date-utils"
+import { getCurrentLocalDate, hasPanamaDateTimePassed, toLocalDateTime } from "@/lib/date-utils"
 // Cambiar esta línea:
 // import { supabase } from "@/lib/supabase"
 
@@ -81,16 +81,12 @@ export default function SorteosPage() {
         return
       }
       
-      // Intentar cerrar automáticamente eventos expirados usando hora local del cliente
+      // Intentar cerrar automáticamente eventos expirados usando hora exacta de Panamá
       try {
-        const body = {
-          currentDate: getCurrentLocalDate(),
-          currentTime: getCurrentLocalTime(),
-        }
         await fetch("/api/events/auto-close", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({}),
         })
       } catch (e) {
         console.warn("No se pudo ejecutar auto-close de eventos:", e)
@@ -107,24 +103,16 @@ export default function SorteosPage() {
       const { events: eventsData } = await res.json()
       {
         console.log("Events fetched from API:", eventsData)
-        const currentDate = new Date()
 
-        // Utilidad robusta para parsear fecha y hora (compatible y sin ambigüedades)
-        const toDateTime = (dateStr: string, timeStr: string) => {
-          return toLocalDateTime(dateStr, timeStr)
-        }
-
-        // Filtrar eventos activos y cerrados con parseo fiable y considerando status
+        // Filtrar eventos activos y cerrados usando hora exacta de Panamá
         const active = eventsData.filter((draw) => {
           const compareDate = draw.repeat_daily ? getCurrentLocalDate() : draw.end_date
-          const endDT = toDateTime(compareDate, draw.end_time)
-          return endDT > currentDate && draw.status === "active"
+          return !hasPanamaDateTimePassed(compareDate, draw.end_time) && draw.status === "active"
         })
 
         const closed = eventsData.filter((draw) => {
           const compareDate = draw.repeat_daily ? getCurrentLocalDate() : draw.end_date
-          const endDT = toDateTime(compareDate, draw.end_time)
-          return endDT <= currentDate || !draw.active || (typeof draw.status === "string" && draw.status.startsWith("closed_"))
+          return hasPanamaDateTimePassed(compareDate, draw.end_time) || !draw.active || (typeof draw.status === "string" && draw.status.startsWith("closed_"))
         })
 
         // Mapear a formato esperado por el componente
@@ -199,22 +187,15 @@ export default function SorteosPage() {
     const storedDraws = localStorage.getItem("events")
     if (storedDraws) {
       const parsedDraws = JSON.parse(storedDraws)
-      const currentDate = new Date()
-
-      const toDateTime = (dateStr: string, timeStr: string) => {
-        return toLocalDateTime(dateStr, timeStr)
-      }
 
       const active = parsedDraws.filter((draw: any) => {
         const compareDate = draw.repeatDaily ? getCurrentLocalDate() : draw.endDate
-        const endDT = toDateTime(compareDate, draw.endTime)
-        return endDT > currentDate && draw.status === "active"
+        return !hasPanamaDateTimePassed(compareDate, draw.endTime) && draw.status === "active"
       })
 
       const closed = parsedDraws.filter((draw: any) => {
         const compareDate = draw.repeatDaily ? getCurrentLocalDate() : draw.endDate
-        const endDT = toDateTime(compareDate, draw.endTime)
-        return endDT <= currentDate || !draw.active || (typeof draw.status === "string" && draw.status.startsWith("closed_"))
+        return hasPanamaDateTimePassed(compareDate, draw.endTime) || !draw.active || (typeof draw.status === "string" && draw.status.startsWith("closed_"))
       })
 
       setStateActiveDraws(
@@ -441,4 +422,3 @@ export default function SorteosPage() {
     </div>
   )
 }
-

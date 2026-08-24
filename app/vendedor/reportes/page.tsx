@@ -9,7 +9,7 @@ import { Clock, Ticket, ChevronRight, Search, Trophy, Users, DollarSign } from "
 import { Card } from "@/components/ui/card"
 import { ErrorBoundary } from "@/components/ui/error-boundary"
 import { debounce } from "@/lib/performance-utils"
-import { toLocalDateTime } from "@/lib/date-utils"
+import { hasPanamaDateTimePassed } from "@/lib/date-utils"
 
 // Importar los componentes y utilidades refactorizados
 import { PageHeader } from "@/components/ui/page-header"
@@ -381,17 +381,11 @@ export default function ReportesPage() {
           return
         }
 
-        const now = new Date()
-        const toDateTime = (dateStr: string, timeStr: string) => {
-          return toLocalDateTime(dateStr, timeStr)
-        }
-
-        // Filtrar por fecha seleccionada y estado cerrado o expirado
+        // Filtrar por fecha seleccionada y estado cerrado o expirado usando hora exacta de Panamá
         const closedEventsForDate = events.filter((event: any) => {
-          const endDT = toDateTime(event.end_date, event.end_time)
           const statusStr = String(event.status || '')
           const isClosedStatus = statusStr.startsWith("closed_")
-          const isExpiredByTime = endDT <= now || event.active === false
+          const isExpiredByTime = hasPanamaDateTimePassed(event.end_date, event.end_time) || event.active === false
           const matchesSelectedDate = event.end_date === date
           return matchesSelectedDate && (isClosedStatus || isExpiredByTime)
         })
