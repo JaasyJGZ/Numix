@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { getCurrentPanamaDateTime, hasPanamaDateTimePassed } from "@/lib/date-utils"
 import { getSupabaseAdmin } from "@/lib/supabase"
 
 export async function GET() {
@@ -22,7 +23,21 @@ export async function GET() {
       )
     }
 
-    return NextResponse.json({ events: data ?? [] }, { status: 200 })
+    const now = new Date()
+    const { currentDate } = getCurrentPanamaDateTime(now)
+    const events = (data ?? []).map((event: any) => {
+      const compareDate = event.repeat_daily ? currentDate : event.end_date
+      const expiredByTime = hasPanamaDateTimePassed(compareDate, event.end_time, now)
+      const closedByStatus = typeof event.status === "string" && event.status.startsWith("closed_")
+
+      return {
+        ...event,
+        is_expired_by_time: expiredByTime,
+        is_closed_by_server: expiredByTime || !event.active || closedByStatus,
+      }
+    })
+
+    return NextResponse.json({ events }, { status: 200 })
   } catch (e) {
     const err = e as Error
     return NextResponse.json(

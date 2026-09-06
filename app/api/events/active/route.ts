@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { getCurrentPanamaDateTime, hasPanamaDateTimePassed } from "@/lib/date-utils"
 import { getSupabaseAdmin } from "@/lib/supabase"
 
 // GET /api/events/active?date=YYYY-MM-DD
@@ -30,10 +31,14 @@ export async function GET(req: Request) {
       )
     }
 
-    // No filtrar por "now" en el servidor para evitar efectos por zona horaria.
-    // La clasificación active/closed se realiza en el cliente con parseo local.
-    // Para repeat_daily, el cierre automático se determina por hora del día actual.
-    return NextResponse.json({ events }, { status: 200 })
+    const now = new Date()
+    const { currentDate } = getCurrentPanamaDateTime(now)
+    const activeEvents = (events ?? []).filter((event: any) => {
+      const compareDate = event.repeat_daily ? currentDate : event.end_date
+      return !hasPanamaDateTimePassed(compareDate, event.end_time, now)
+    })
+
+    return NextResponse.json({ events: activeEvents }, { status: 200 })
   } catch (e) {
     const err = e as Error
     return NextResponse.json({ error: { message: err.message, stack: err.stack } }, { status: 500 })

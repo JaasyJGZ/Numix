@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Award, AlertCircle } from "lucide-react"
 import { Card } from "@/components/ui/card"
-import { getCurrentLocalDate, hasPanamaDateTimePassed, toLocalDateTime } from "@/lib/date-utils"
 // Cambiar esta línea:
 // import { supabase } from "@/lib/supabase"
 
@@ -106,13 +105,12 @@ export default function SorteosPage() {
 
         // Filtrar eventos activos y cerrados usando hora exacta de Panamá
         const active = eventsData.filter((draw) => {
-          const compareDate = draw.repeat_daily ? getCurrentLocalDate() : draw.end_date
-          return !hasPanamaDateTimePassed(compareDate, draw.end_time) && draw.status === "active"
+          const isClosedByServer = Boolean(draw.is_closed_by_server)
+          return !isClosedByServer && draw.status === "active"
         })
 
         const closed = eventsData.filter((draw) => {
-          const compareDate = draw.repeat_daily ? getCurrentLocalDate() : draw.end_date
-          return hasPanamaDateTimePassed(compareDate, draw.end_time) || !draw.active || (typeof draw.status === "string" && draw.status.startsWith("closed_"))
+          return Boolean(draw.is_closed_by_server)
         })
 
         // Mapear a formato esperado por el componente
@@ -158,6 +156,7 @@ export default function SorteosPage() {
               repeatDaily: event.repeat_daily ?? false,
               pricePerTime: typeof event.price_per_time === 'number' ? event.price_per_time : 0.20,
               status: event.status || "active",
+              isClosedByServer: Boolean(event.is_closed_by_server),
               awardedNumbers: event.first_prize
                 ? {
                     firstPrize: event.first_prize,
@@ -189,13 +188,17 @@ export default function SorteosPage() {
       const parsedDraws = JSON.parse(storedDraws)
 
       const active = parsedDraws.filter((draw: any) => {
-        const compareDate = draw.repeatDaily ? getCurrentLocalDate() : draw.endDate
-        return !hasPanamaDateTimePassed(compareDate, draw.endTime) && draw.status === "active"
+        if (typeof draw.isClosedByServer === "boolean") {
+          return !draw.isClosedByServer && draw.status === "active"
+        }
+        return draw.status === "active" && draw.active !== false
       })
 
       const closed = parsedDraws.filter((draw: any) => {
-        const compareDate = draw.repeatDaily ? getCurrentLocalDate() : draw.endDate
-        return hasPanamaDateTimePassed(compareDate, draw.endTime) || !draw.active || (typeof draw.status === "string" && draw.status.startsWith("closed_"))
+        if (typeof draw.isClosedByServer === "boolean") {
+          return draw.isClosedByServer
+        }
+        return !draw.active || (typeof draw.status === "string" && draw.status.startsWith("closed_"))
       })
 
       setStateActiveDraws(
